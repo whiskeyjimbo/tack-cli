@@ -7,10 +7,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/whiskeyjimb/tack-cli/internal/config"
 	"github.com/whiskeyjimb/tack-cli/internal/meta"
 	pluginpkg "github.com/whiskeyjimb/tack-cli/internal/plugin"
-	"github.com/spf13/cobra"
 )
 
 // NewRootCommand creates the top-level CLI command with dynamic plugin loading.
@@ -19,6 +19,7 @@ func NewRootCommand(cfg *config.Config, stack *pluginpkg.PluginStack) *cobra.Com
 		outputFormat string
 		verbose      bool
 		quiet        bool
+		trustPlugins bool
 	)
 
 	root := &cobra.Command{
@@ -35,6 +36,7 @@ network services, and system state.`, strings.Title(meta.AppName)),
 	root.PersistentFlags().StringVar(&outputFormat, "output", cfg.Output, "Output format: table, json, yaml")
 	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging from plugins")
 	root.PersistentFlags().BoolVar(&quiet, "quiet", cfg.Quiet, "Suppress output; exit code indicates result")
+	root.PersistentFlags().BoolVar(&trustPlugins, "trust-plugins", false, "Trust all plugins and automatically grant requested capabilities")
 
 	// When quiet mode is enabled, override output format
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
@@ -65,7 +67,7 @@ network services, and system state.`, strings.Title(meta.AppName)),
 
 // RegisterPluginCommands discovers plugins and adds their commands to root.
 // This is called from main.go after flag parsing.
-func RegisterPluginCommands(root *cobra.Command, outputFormat *string, verbose *bool, cfg *config.Config, stack *pluginpkg.PluginStack) error {
+func RegisterPluginCommands(root *cobra.Command, outputFormat *string, verbose *bool, trustPlugins *bool, cfg *config.Config, stack *pluginpkg.PluginStack) error {
 	ctx := context.Background()
 
 	loader := pluginpkg.NewLoader(
@@ -88,7 +90,7 @@ func RegisterPluginCommands(root *cobra.Command, outputFormat *string, verbose *
 			defaults = cfg.PluginDefaults[dp.Manifest.Name]
 		}
 
-		pluginCmd := generatePluginCommand(dp.Manifest, dp.Loader, outputFormat, verbose, defaults)
+		pluginCmd := generatePluginCommand(dp.Manifest, dp.Loader, outputFormat, verbose, trustPlugins, defaults)
 		root.AddCommand(pluginCmd)
 	}
 

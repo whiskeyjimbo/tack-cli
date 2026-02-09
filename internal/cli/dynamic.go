@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	abi "github.com/reglet-dev/reglet-abi"
+	"github.com/spf13/cobra"
 	"github.com/whiskeyjimb/tack-cli/internal/meta"
 	"github.com/whiskeyjimb/tack-cli/internal/output"
 	"github.com/whiskeyjimb/tack-cli/internal/runtime"
-	"github.com/spf13/cobra"
 )
 
 // generatePluginCommand creates a cobra command tree from a plugin manifest.
@@ -23,7 +23,7 @@ import (
 //
 //	cli aws iam get_account_summary
 //	cli aws ec2 describe_security_groups
-func generatePluginCommand(manifest abi.Manifest, wasmLoader func() ([]byte, error), outputFormat *string, verbose *bool, defaults map[string]string) *cobra.Command {
+func generatePluginCommand(manifest abi.Manifest, wasmLoader func() ([]byte, error), outputFormat *string, verbose *bool, trustPlugins *bool, defaults map[string]string) *cobra.Command {
 	pluginCmd := &cobra.Command{
 		Use:   manifest.Name,
 		Short: manifest.Description,
@@ -47,7 +47,7 @@ func generatePluginCommand(manifest abi.Manifest, wasmLoader func() ([]byte, err
 		for _, svc := range manifest.Services {
 			for _, op := range svc.Operations {
 				pluginCmd.AddCommand(
-					createOperationCommand(manifest.Name, svc.Name, op, schema, wasmLoader, outputFormat, verbose, defaults, isMulti),
+					createOperationCommand(manifest.Name, svc.Name, op, schema, wasmLoader, outputFormat, verbose, trustPlugins, defaults, isMulti),
 				)
 				if len(op.Examples) > 0 {
 					rootExamples = append(rootExamples, formatExamplesForHelp(manifest.Name, svc.Name, op, isMulti))
@@ -65,7 +65,7 @@ func generatePluginCommand(manifest abi.Manifest, wasmLoader func() ([]byte, err
 			var svcExamples []string
 			for _, op := range svc.Operations {
 				svcCmd.AddCommand(
-					createOperationCommand(manifest.Name, svcName, op, schema, wasmLoader, outputFormat, verbose, defaults, isMulti),
+					createOperationCommand(manifest.Name, svcName, op, schema, wasmLoader, outputFormat, verbose, trustPlugins, defaults, isMulti),
 				)
 				if len(op.Examples) > 0 {
 					svcExamples = append(svcExamples, formatExamplesForHelp(manifest.Name, svcName, op, isMulti))
@@ -95,6 +95,7 @@ func createOperationCommand(
 	wasmLoader func() ([]byte, error),
 	outputFormat *string,
 	verbose *bool,
+	trustPlugins *bool,
 	defaults map[string]string,
 	isMulti bool,
 ) *cobra.Command {
@@ -111,7 +112,10 @@ func createOperationCommand(
 			}
 
 			// Create runtime
-			runner, err := runtime.NewPluginRunner(ctx, runtime.WithVerbose(*verbose))
+			runner, err := runtime.NewPluginRunner(ctx,
+				runtime.WithVerbose(*verbose),
+				runtime.WithTrustPlugins(*trustPlugins),
+			)
 			if err != nil {
 				return fmt.Errorf("creating runtime: %w", err)
 			}

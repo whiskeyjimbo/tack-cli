@@ -24,8 +24,9 @@ func TestGeneratePluginCommand_SingleService(t *testing.T) {
 
 	outputFormat := "json"
 	verbose := false
+	trustPlugins := false
 	loader := func() ([]byte, error) { return nil, nil }
-	cmd := generatePluginCommand(manifest, loader, &outputFormat, &verbose, nil)
+	cmd := generatePluginCommand(manifest, loader, &outputFormat, &verbose, &trustPlugins, nil)
 
 	if cmd.Use != "dns" {
 		t.Errorf("expected Use='dns', got %q", cmd.Use)
@@ -62,8 +63,9 @@ func TestGeneratePluginCommand_MultiService(t *testing.T) {
 
 	outputFormat := "json"
 	verbose := false
+	trustPlugins := false
 	loader := func() ([]byte, error) { return nil, nil }
-	cmd := generatePluginCommand(manifest, loader, &outputFormat, &verbose, nil)
+	cmd := generatePluginCommand(manifest, loader, &outputFormat, &verbose, &trustPlugins, nil)
 
 	if len(cmd.Commands()) != 2 {
 		t.Fatalf("expected 2 service subcommands, got %d", len(cmd.Commands()))

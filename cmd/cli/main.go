@@ -39,7 +39,8 @@ func main() {
 	// Discover and register plugin commands
 	outputFormat := cfg.Output
 	verbose := false
-	// Find --output and --verbose in args (simple scan before cobra parsing)
+	trustPlugins := false
+	// Find --output, --verbose, and --trust-plugins in args (simple scan before cobra parsing)
 	for i, arg := range os.Args {
 		if arg == "--output" && i+1 < len(os.Args) {
 			outputFormat = os.Args[i+1]
@@ -47,8 +48,11 @@ func main() {
 		if arg == "--verbose" || arg == "-v" {
 			verbose = true
 		}
+		if arg == "--trust-plugins" {
+			trustPlugins = true
+		}
 	}
-	_ = internalcli.RegisterPluginCommands(root, &outputFormat, &verbose, cfg, stack)
+	_ = internalcli.RegisterPluginCommands(root, &outputFormat, &verbose, &trustPlugins, cfg, stack)
 
 	if err := root.ExecuteContext(ctx); err != nil {
 		msg := err.Error()
