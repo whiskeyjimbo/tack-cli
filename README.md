@@ -38,7 +38,7 @@ tack plugin prune --keep 3
 
 ## Configuration
 
-`~/.cli/config.yaml`
+`~/.tack/config.yaml`
 
 ```yaml
 output: table
@@ -56,7 +56,7 @@ aliases:
 
 Aliases create top-level shortcuts: `tack sg --region us-west-2`.
 
-Env vars `CLI_OUTPUT`, `CLI_TIMEOUT`, `CLI_DEFAULT_REGISTRY` override the config file.
+Env vars `TACK_OUTPUT`, `TACK_TIMEOUT`, `TACK_DEFAULT_REGISTRY` override the config file.
 
 ## Building
 

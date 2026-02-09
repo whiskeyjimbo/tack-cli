@@ -92,9 +92,9 @@ func DefaultConfigDir() string {
 // ApplyEnvOverrides applies environment variable overrides to the config.
 //
 // Environment variables (higher priority than config file):
-//   - CLI_OUTPUT: default output format
-//   - CLI_TIMEOUT: default timeout
-//   - CLI_DEFAULT_REGISTRY: OCI registry prefix
+//   - TACK_OUTPUT: default output format
+//   - TACK_TIMEOUT: default timeout
+//   - TACK_DEFAULT_REGISTRY: OCI registry prefix
 func (c *Config) ApplyEnvOverrides() {
 	prefix := strings.ToUpper(meta.AppName) + "_"
 	if v := os.Getenv(prefix + "OUTPUT"); v != "" {
