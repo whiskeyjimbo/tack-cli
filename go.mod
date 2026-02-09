@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/reglet-dev/reglet-abi v0.1.0
-	github.com/reglet-dev/reglet-host-sdk v0.1.2
+	github.com/reglet-dev/reglet-host-sdk v0.1.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	gopkg.in/yaml.v3 v3.0.1
