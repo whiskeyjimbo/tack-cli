@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/whiskeyjimb/tack-cli/internal/runtime"
 	abi "github.com/reglet-dev/reglet-abi"
 	hostdto "github.com/reglet-dev/reglet-host-sdk/plugin/dto"
+	"github.com/whiskeyjimb/tack-cli/internal/runtime"
 )
 
 // DiscoveredPlugin holds a plugin's WASM loader and manifest.

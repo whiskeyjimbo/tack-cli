@@ -11,9 +11,9 @@ import (
 
 	hostentities "github.com/reglet-dev/reglet-host-sdk/plugin/entities"
 	hostvalues "github.com/reglet-dev/reglet-host-sdk/plugin/values"
+	"github.com/spf13/cobra"
 	"github.com/whiskeyjimb/tack-cli/internal/meta"
 	internalplugin "github.com/whiskeyjimb/tack-cli/internal/plugin"
-	"github.com/spf13/cobra"
 )
 
 // newPluginCommand creates the "plugin" management command group.

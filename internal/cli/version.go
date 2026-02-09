@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/whiskeyjimb/tack-cli/internal/meta"
 	"github.com/spf13/cobra"
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
 )
 
 // Version is set at build time via ldflags.
