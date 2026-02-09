@@ -233,22 +233,20 @@ func (l *Loader) loadEmbeddedPlugins(ctx context.Context, cache *DiscoveryCache)
 }
 
 func (l *Loader) loadLocalPlugins(ctx context.Context, cache *DiscoveryCache) ([]DiscoveredPlugin, bool, error) {
-	entries, err := os.ReadDir(l.pluginsDir)
-	if err != nil {
-		return nil, false, err
-	}
-
 	var plugins []DiscoveredPlugin
 	updated := false
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".wasm") {
-			continue
+
+	err := filepath.WalkDir(l.pluginsDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil // Skip directories we can't read
+		}
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".wasm") {
+			return nil
 		}
 
-		path := filepath.Join(l.pluginsDir, entry.Name())
-		info, err := entry.Info()
+		info, err := d.Info()
 		if err != nil {
-			continue
+			return nil
 		}
 
 		if cached, ok := cache.Files[path]; ok && cached.Size == info.Size() && cached.ModTime.Equal(info.ModTime()) {
@@ -258,17 +256,17 @@ func (l *Loader) loadLocalPlugins(ctx context.Context, cache *DiscoveryCache) ([
 				Source:   "local",
 				Path:     path,
 			})
-			continue
+			return nil
 		}
 
 		// Cache miss
 		data, err := os.ReadFile(path)
 		if err != nil {
-			continue
+			return nil
 		}
 		p, err := l.loadPluginBytes(ctx, data, "local", path)
 		if err != nil {
-			continue
+			return nil
 		}
 
 		cache.Files[path] = CacheEntry{
@@ -278,6 +276,11 @@ func (l *Loader) loadLocalPlugins(ctx context.Context, cache *DiscoveryCache) ([
 		}
 		updated = true
 		plugins = append(plugins, *p)
+		return nil
+	})
+
+	if err != nil && !os.IsNotExist(err) {
+		return nil, false, err
 	}
 
 	return plugins, updated, nil

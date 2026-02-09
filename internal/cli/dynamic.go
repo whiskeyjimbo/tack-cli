@@ -37,29 +37,50 @@ func generatePluginCommand(manifest abi.Manifest, wasmLoader func() ([]byte, err
 		return pluginCmd
 	}
 
-	if len(manifest.Services) == 1 {
-		// Single-service: operations are direct subcommands of plugin
+	isMulti := len(manifest.Services) > 1
+	var rootExamples []string
+
+	if !isMulti {
+		// Single-service: operations are direct subcommands of plugin.
+		// Examples bubble up to the plugin root command.
 		for _, svc := range manifest.Services {
 			for _, op := range svc.Operations {
 				pluginCmd.AddCommand(
-					createOperationCommand(manifest.Name, svc.Name, op, schema, wasmLoader, outputFormat, verbose, defaults),
+					createOperationCommand(manifest.Name, svc.Name, op, schema, wasmLoader, outputFormat, verbose, defaults, isMulti),
 				)
+				if len(op.Examples) > 0 {
+					rootExamples = append(rootExamples, formatExamplesForHelp(manifest.Name, svc.Name, op, isMulti))
+				}
 			}
 		}
 	} else {
-		// Multi-service: services are subcommands, operations nested under them
+		// Multi-service: services are subcommands, operations nested under them.
+		// Examples bubble up to the service command level.
 		for svcName, svc := range manifest.Services {
 			svcCmd := &cobra.Command{
 				Use:   svcName,
 				Short: svc.Description,
 			}
+			var svcExamples []string
 			for _, op := range svc.Operations {
 				svcCmd.AddCommand(
-					createOperationCommand(manifest.Name, svcName, op, schema, wasmLoader, outputFormat, verbose, defaults),
+					createOperationCommand(manifest.Name, svcName, op, schema, wasmLoader, outputFormat, verbose, defaults, isMulti),
 				)
+				if len(op.Examples) > 0 {
+					svcExamples = append(svcExamples, formatExamplesForHelp(manifest.Name, svcName, op, isMulti))
+				}
+			}
+			if len(svcExamples) > 0 {
+				svcCmd.Example = strings.Join(svcExamples, "\n\n")
+				// Aggregate just the first example from each service for the plugin root help
+				rootExamples = append(rootExamples, strings.SplitN(svcExamples[0], "\n\n", 2)[0])
 			}
 			pluginCmd.AddCommand(svcCmd)
 		}
+	}
+
+	if len(rootExamples) > 0 {
+		pluginCmd.Example = strings.Join(rootExamples, "\n\n")
 	}
 
 	return pluginCmd
@@ -74,6 +95,7 @@ func createOperationCommand(
 	outputFormat *string,
 	verbose *bool,
 	defaults map[string]string,
+	isMulti bool,
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   op.Name,
@@ -144,7 +166,7 @@ func createOperationCommand(
 
 	// Add examples to help text
 	if len(op.Examples) > 0 {
-		cmd.Example = formatExamplesForHelp(pluginName, serviceName, op)
+		cmd.Example = formatExamplesForHelp(pluginName, serviceName, op, isMulti)
 	}
 
 	return cmd
@@ -161,7 +183,7 @@ func createOperationCommand(
 //	cli <plugin> <service> <operation> <flags>
 //
 // Error examples (those with ExpectedError set) are skipped.
-func formatExamplesForHelp(pluginName, serviceName string, op abi.OperationManifest) string {
+func formatExamplesForHelp(pluginName, serviceName string, op abi.OperationManifest, isMulti bool) string {
 	var sb strings.Builder
 
 	for _, ex := range op.Examples {
@@ -175,7 +197,11 @@ func formatExamplesForHelp(pluginName, serviceName string, op abi.OperationManif
 		}
 
 		flags := inputJSONToFlags(ex.Input)
-		sb.WriteString(fmt.Sprintf("  cli %s %s %s\n\n", pluginName, op.Name, flags))
+		if isMulti {
+			sb.WriteString(fmt.Sprintf("  cli %s %s %s %s\n\n", pluginName, serviceName, op.Name, flags))
+		} else {
+			sb.WriteString(fmt.Sprintf("  cli %s %s %s\n\n", pluginName, op.Name, flags))
+		}
 	}
 
 	return strings.TrimSuffix(sb.String(), "\n")

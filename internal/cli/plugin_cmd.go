@@ -85,8 +85,13 @@ Examples:
 			out := cmd.OutOrStdout()
 			ctx := cmd.Context()
 
-			// Check if it's a local file path
-			if strings.HasSuffix(target, ".wasm") || strings.Contains(target, string(os.PathSeparator)) || strings.HasPrefix(target, ".") {
+			// Determine if target is a local file or OCI reference
+			isLocal := strings.HasSuffix(target, ".wasm") ||
+				strings.HasPrefix(target, "./") ||
+				strings.HasPrefix(target, "../") ||
+				filepath.IsAbs(target)
+
+			if isLocal {
 				return installFromLocalFile(ctx, stack, target, out)
 			}
 
