@@ -6,9 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/reglet-dev/cli/internal/output"
-	"github.com/reglet-dev/cli/internal/runtime"
 	abi "github.com/reglet-dev/reglet-abi"
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
+	"github.com/whiskeyjimb/tack-cli/internal/output"
+	"github.com/whiskeyjimb/tack-cli/internal/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -176,11 +177,11 @@ func createOperationCommand(
 //
 // For single-service plugins, the command format is:
 //
-//	cli <plugin> <operation> <flags>
+//	<AppName> <plugin> <operation> <flags>
 //
 // For multi-service plugins, the command format is:
 //
-//	cli <plugin> <service> <operation> <flags>
+//	<AppName> <plugin> <service> <operation> <flags>
 //
 // Error examples (those with ExpectedError set) are skipped.
 func formatExamplesForHelp(pluginName, serviceName string, op abi.OperationManifest, isMulti bool) string {
@@ -198,9 +199,9 @@ func formatExamplesForHelp(pluginName, serviceName string, op abi.OperationManif
 
 		flags := inputJSONToFlags(ex.Input)
 		if isMulti {
-			sb.WriteString(fmt.Sprintf("  cli %s %s %s %s\n\n", pluginName, serviceName, op.Name, flags))
+			sb.WriteString(fmt.Sprintf("  %s %s %s %s %s\n\n", meta.AppName, pluginName, serviceName, op.Name, flags))
 		} else {
-			sb.WriteString(fmt.Sprintf("  cli %s %s %s\n\n", pluginName, op.Name, flags))
+			sb.WriteString(fmt.Sprintf("  %s %s %s %s\n\n", meta.AppName, pluginName, op.Name, flags))
 		}
 	}
 

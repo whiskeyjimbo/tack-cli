@@ -1,10 +1,10 @@
 # ──────────────────────────────────────────────────────────────
-#  Reglet CLI
+#  Tack CLI
 # ──────────────────────────────────────────────────────────────
 
-BINARY   := cli
+BINARY   := tack
 CMD      := ./cmd/cli
-MODULE   := github.com/reglet-dev/cli
+MODULE   := github.com/whiskeyjimb/tack-cli
 
 VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 COMMIT   ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
@@ -133,7 +133,7 @@ dev: tidy build ## Tidy, build — quick iteration loop
 
 .PHONY: help
 help:
-	@printf "\n  $(C_BOLD)Reglet CLI$(C_RESET) $(C_DIM)$(VERSION)$(C_RESET)\n\n"
+	@printf "\n  $(C_BOLD)Tack CLI$(C_RESET) $(C_DIM)$(VERSION)$(C_RESET)\n\n"
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "  $(C_CYAN)%-14s$(C_RESET) %s\n", $$1, $$2}'
 	@printf "\n"

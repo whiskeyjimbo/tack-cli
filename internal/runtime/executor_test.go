@@ -5,35 +5,23 @@ import (
 	"os"
 	"testing"
 
-	"github.com/reglet-dev/cli/internal/runtime"
+	"github.com/whiskeyjimb/tack-cli/internal/runtime"
 )
 
-// testDNSWASMPath returns the path to the DNS plugin WASM binary.
-// Skip the test if the binary is not found.
-func testDNSWASMPath(t *testing.T) []byte {
+// testWASMPath returns the path to the test fixture WASM binary.
+func testWASMPath(t *testing.T) []byte {
 	t.Helper()
 
-	// Try relative path from project root (when running via go test ./...)
-	paths := []string{
-		"../../../reglet-plugins/plugins/dns/dns.wasm", // from internal/runtime/
-		"../../reglet-plugins/plugins/dns/dns.wasm",    // from internal/
-		"../reglet-plugins/plugins/dns/dns.wasm",       // project root relative to cli/
-		"reglet-plugins/plugins/dns/dns.wasm",          // project root
+	path := "testdata/fixture.wasm"
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Skipf("Test fixture not found at %s. Build it in reglet/internal/infrastructure/wasm/testdata/fixture first.", path)
 	}
-
-	for _, p := range paths {
-		data, err := os.ReadFile(p)
-		if err == nil {
-			return data
-		}
-	}
-
-	t.Skip("DNS WASM binary not found; build it with: make -C reglet-plugins/plugins/dns build")
-	return nil
+	return data
 }
 
 func TestPluginRunner_LoadPlugin(t *testing.T) {
-	wasmBytes := testDNSWASMPath(t)
+	wasmBytes := testWASMPath(t)
 	ctx := context.Background()
 
 	runner, err := runtime.NewPluginRunner(ctx)
@@ -48,25 +36,13 @@ func TestPluginRunner_LoadPlugin(t *testing.T) {
 	}
 
 	// Verify manifest
-	if plugin.Manifest.Name != "dns" {
-		t.Errorf("expected manifest name 'dns', got %q", plugin.Manifest.Name)
-	}
-	if len(plugin.Manifest.Services) == 0 {
-		t.Error("expected at least one service in manifest")
-	}
-
-	// Verify the dns service exists
-	svc, ok := plugin.Manifest.Services["dns"]
-	if !ok {
-		t.Fatal("expected 'dns' service in manifest")
-	}
-	if len(svc.Operations) == 0 {
-		t.Error("expected at least one operation in dns service")
+	if plugin.Manifest.Name != "fixture" {
+		t.Errorf("expected manifest name 'fixture', got %q", plugin.Manifest.Name)
 	}
 }
 
 func TestPluginRunner_Check(t *testing.T) {
-	wasmBytes := testDNSWASMPath(t)
+	wasmBytes := testWASMPath(t)
 	ctx := context.Background()
 
 	runner, err := runtime.NewPluginRunner(ctx)
@@ -80,10 +56,10 @@ func TestPluginRunner_Check(t *testing.T) {
 		t.Fatalf("LoadPlugin: %v", err)
 	}
 
-	// Execute a DNS resolve
+	// Execute a check
 	result, err := plugin.Check(ctx, map[string]any{
-		"hostname":    "example.com",
-		"record_type": "A",
+		"action": "echo_test",
+		"input":  "hello world",
 	})
 	if err != nil {
 		t.Fatalf("Check: %v", err)
@@ -94,11 +70,11 @@ func TestPluginRunner_Check(t *testing.T) {
 		t.Error("expected non-empty result status")
 	}
 
-	// Data should contain hostname echo
+	// Data should contain echoed input
 	if result.Data == nil {
 		t.Fatal("expected non-nil result data")
 	}
-	if result.Data["hostname"] != "example.com" {
-		t.Errorf("expected hostname 'example.com' in data, got %v", result.Data["hostname"])
+	if result.Data["echo"] != "hello world" {
+		t.Errorf("expected echo 'hello world' in data, got %v", result.Data["echo"])
 	}
 }

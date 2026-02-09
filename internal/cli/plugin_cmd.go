@@ -9,9 +9,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	internalplugin "github.com/reglet-dev/cli/internal/plugin"
 	hostentities "github.com/reglet-dev/reglet-host-sdk/plugin/entities"
 	hostvalues "github.com/reglet-dev/reglet-host-sdk/plugin/values"
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
+	internalplugin "github.com/whiskeyjimb/tack-cli/internal/plugin"
 	"github.com/spf13/cobra"
 )
 
@@ -72,13 +73,13 @@ func newPluginInstallCommand(stack *internalplugin.PluginStack, defaultRegistry 
 	return &cobra.Command{
 		Use:   "install <reference>",
 		Short: "Install a plugin from an OCI registry or local file",
-		Long: `Install a plugin from an OCI registry or a local .wasm file.
+		Long: fmt.Sprintf(`Install a plugin from an OCI registry or a local .wasm file.
 
 Examples:
-  cli plugin install dns                                        # Install latest from default registry
-  cli plugin install dns@1.2.0                                  # Install specific version
-  cli plugin install ghcr.io/my-org/plugins/custom:1.0.0        # Install from custom registry
-  cli plugin install ./custom.wasm                              # Install from local file`,
+  %s plugin install dns                                        # Install latest from default registry
+  %s plugin install dns@1.2.0                                  # Install specific version
+  %s plugin install ghcr.io/my-org/plugins/custom:1.0.0        # Install from custom registry
+  %s plugin install ./custom.wasm                              # Install from local file`, meta.AppName, meta.AppName, meta.AppName, meta.AppName),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target := args[0]

@@ -7,9 +7,10 @@ import (
 	"os/signal"
 	"strings"
 
-	internalcli "github.com/reglet-dev/cli/internal/cli"
-	"github.com/reglet-dev/cli/internal/config"
-	"github.com/reglet-dev/cli/internal/plugin"
+	internalcli "github.com/whiskeyjimb/tack-cli/internal/cli"
+	"github.com/whiskeyjimb/tack-cli/internal/config"
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
+	"github.com/whiskeyjimb/tack-cli/internal/plugin"
 )
 
 func main() {
@@ -67,7 +68,7 @@ func main() {
 				if len(installed) > 0 {
 					fmt.Fprintf(os.Stderr, "  Installed plugins: %s\n", strings.Join(installed, ", "))
 				}
-				fmt.Fprintf(os.Stderr, "  To install: cli plugin install %s\n", unknownCmd)
+				fmt.Fprintf(os.Stderr, "  To install: %s plugin install %s\n", meta.AppName, unknownCmd)
 				os.Exit(1)
 			}
 		}

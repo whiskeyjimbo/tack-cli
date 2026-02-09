@@ -11,9 +11,8 @@ import (
 func TestLoader_LoadLocalPlugins(t *testing.T) {
 	// This test requires a real WASM binary
 	wasmPaths := []string{
-		"../reglet-plugins/plugins/dns/dns.wasm",
-		"../../reglet-plugins/plugins/dns/dns.wasm",
-		"/home/jrose/src/all-reglet/reglet-plugins/plugins/dns/dns.wasm",
+		"../runtime/testdata/fixture.wasm", // relative to internal/plugin
+		"../../internal/runtime/testdata/fixture.wasm",
 	}
 
 	var wasmData []byte
@@ -44,7 +43,7 @@ func TestLoader_LoadLocalPlugins(t *testing.T) {
 
 	found := false
 	for _, p := range plugins {
-		if p.Manifest.Name == "dns" {
+		if p.Manifest.Name == "fixture" {
 			found = true
 			if p.Source != "local" {
 				t.Errorf("expected source 'local', got %q", p.Source)
@@ -52,7 +51,7 @@ func TestLoader_LoadLocalPlugins(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("DNS plugin not found in discovered plugins")
+		t.Error("Fixture plugin not found in discovered plugins")
 	}
 }
 

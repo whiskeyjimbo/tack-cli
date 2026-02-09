@@ -8,6 +8,7 @@ import (
 	"time"
 
 	abi "github.com/reglet-dev/reglet-abi"
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
 )
 
 // DiscoveryCache stores extracted manifests to speed up plugin registration.
@@ -66,11 +67,11 @@ func (c *DiscoveryCache) Save(path string) error {
 }
 
 // DefaultCachePath returns the default location for the discovery cache.
-// ~/.cli/discovery_cache.json
+// ~/.tack/discovery_cache.json
 func DefaultCachePath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".", ".cli", "discovery_cache.json")
+		return filepath.Join(".", "."+meta.AppName, "discovery_cache.json")
 	}
-	return filepath.Join(home, ".cli", "discovery_cache.json")
+	return filepath.Join(home, "."+meta.AppName, "discovery_cache.json")
 }

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
 	"gopkg.in/yaml.v3"
 )
 
-// Config holds user configuration loaded from ~/.cli/config.yaml.
+// Config holds user configuration loaded from ~/.tack/config.yaml.
 type Config struct {
 	// Output is the default output format (table, json, yaml).
 	Output string `yaml:"output"`
@@ -68,23 +70,23 @@ func Load(path string) (*Config, error) {
 }
 
 // DefaultConfigPath returns the default config file path.
-// ~/.cli/config.yaml
+// ~/.tack/config.yaml
 func DefaultConfigPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".", ".cli", "config.yaml")
+		return filepath.Join(".", "."+meta.AppName, "config.yaml")
 	}
-	return filepath.Join(home, ".cli", "config.yaml")
+	return filepath.Join(home, "."+meta.AppName, "config.yaml")
 }
 
 // DefaultConfigDir returns the default config directory.
-// ~/.cli/
+// ~/.tack/
 func DefaultConfigDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".", ".cli")
+		return filepath.Join(".", "."+meta.AppName)
 	}
-	return filepath.Join(home, ".cli")
+	return filepath.Join(home, "."+meta.AppName)
 }
 
 // ApplyEnvOverrides applies environment variable overrides to the config.
@@ -94,13 +96,14 @@ func DefaultConfigDir() string {
 //   - CLI_TIMEOUT: default timeout
 //   - CLI_DEFAULT_REGISTRY: OCI registry prefix
 func (c *Config) ApplyEnvOverrides() {
-	if v := os.Getenv("CLI_OUTPUT"); v != "" {
+	prefix := strings.ToUpper(meta.AppName) + "_"
+	if v := os.Getenv(prefix + "OUTPUT"); v != "" {
 		c.Output = v
 	}
-	if v := os.Getenv("CLI_TIMEOUT"); v != "" {
+	if v := os.Getenv(prefix + "TIMEOUT"); v != "" {
 		c.Timeout = v
 	}
-	if v := os.Getenv("CLI_DEFAULT_REGISTRY"); v != "" {
+	if v := os.Getenv(prefix + "DEFAULT_REGISTRY"); v != "" {
 		c.DefaultRegistry = v
 	}
 }

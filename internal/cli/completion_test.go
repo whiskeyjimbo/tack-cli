@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/reglet-dev/cli/internal/config"
+	"github.com/whiskeyjimb/tack-cli/internal/config"
 )
 
 func TestCompletionCommand_Bash(t *testing.T) {

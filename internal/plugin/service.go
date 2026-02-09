@@ -12,6 +12,8 @@ import (
 	hostresolvers "github.com/reglet-dev/reglet-host-sdk/plugin/resolvers"
 	hostservices "github.com/reglet-dev/reglet-host-sdk/plugin/services"
 	hostsigning "github.com/reglet-dev/reglet-host-sdk/plugin/signing"
+
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
 )
 
 // PluginServiceConfig holds configuration for the plugin service stack.
@@ -84,13 +86,13 @@ func NewPluginStack(cfg PluginServiceConfig) (*PluginStack, error) {
 }
 
 // DefaultPluginsDir returns the default local plugin cache directory.
-// ~/.cli/plugins/
+// ~/.tack/plugins/
 func DefaultPluginsDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".", ".cli", "plugins")
+		return filepath.Join(".", "."+meta.AppName, "plugins")
 	}
-	return filepath.Join(home, ".cli", "plugins")
+	return filepath.Join(home, "."+meta.AppName, "plugins")
 }
 
 // EnsurePluginsDir creates the plugins directory if it doesn't exist.

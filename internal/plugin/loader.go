@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/reglet-dev/cli/internal/runtime"
+	"github.com/whiskeyjimb/tack-cli/internal/runtime"
 	abi "github.com/reglet-dev/reglet-abi"
 	hostdto "github.com/reglet-dev/reglet-host-sdk/plugin/dto"
 )

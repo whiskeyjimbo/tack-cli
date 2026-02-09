@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/reglet-dev/cli/internal/config"
-	pluginpkg "github.com/reglet-dev/cli/internal/plugin"
+	"github.com/whiskeyjimb/tack-cli/internal/config"
+	pluginpkg "github.com/whiskeyjimb/tack-cli/internal/plugin"
 )
 
 func TestPluginCommand_ListEmpty(t *testing.T) {

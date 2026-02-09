@@ -5,9 +5,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/reglet-dev/cli/internal/config"
-	pluginpkg "github.com/reglet-dev/cli/internal/plugin"
+	"github.com/whiskeyjimb/tack-cli/internal/config"
+	"github.com/whiskeyjimb/tack-cli/internal/meta"
+	pluginpkg "github.com/whiskeyjimb/tack-cli/internal/plugin"
 	"github.com/spf13/cobra"
 )
 
@@ -20,11 +22,11 @@ func NewRootCommand(cfg *config.Config, stack *pluginpkg.PluginStack) *cobra.Com
 	)
 
 	root := &cobra.Command{
-		Use:   "cli",
+		Use:   meta.AppName,
 		Short: "Infrastructure inspection tool powered by WASM plugins",
-		Long: `CLI is a general-purpose infrastructure inspection tool that leverages
+		Long: fmt.Sprintf(`%s is a general-purpose infrastructure inspection tool that leverages
 WASM plugins to provide a unified interface for querying cloud resources,
-network services, and system state.`,
+network services, and system state.`, strings.Title(meta.AppName)),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
