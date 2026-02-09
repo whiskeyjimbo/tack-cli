@@ -18,6 +18,8 @@ import (
 	"github.com/whiskeyjimb/tack-cli/internal/meta"
 )
 
+var defaultGlobalCache = host.NewPersistentCompilationCache(meta.AppName)
+
 // PluginRunner loads and executes WASM plugins.
 type PluginRunner struct {
 	executor   *host.Executor
@@ -79,6 +81,7 @@ func NewPluginRunner(ctx context.Context, opts ...RunnerOption) (*PluginRunner, 
 	executor, err := host.NewExecutor(ctx,
 		host.WithHostFunctions(registry),
 		host.WithVerbose(config.verbose),
+		host.WithCompilationCache(defaultGlobalCache),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("creating WASM executor: %w", err)
