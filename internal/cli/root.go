@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/whiskeyjimb/tack-cli/internal/config"
@@ -25,9 +24,9 @@ func NewRootCommand(cfg *config.Config, stack *pluginpkg.PluginStack) *cobra.Com
 	root := &cobra.Command{
 		Use:   meta.AppName,
 		Short: "Infrastructure inspection tool powered by WASM plugins",
-		Long: fmt.Sprintf(`%s is a general-purpose infrastructure inspection tool that leverages
+		Long: fmt.Sprintf(`%s is a general-purpose pluggable tool that leverages
 WASM plugins to provide a unified interface for querying cloud resources,
-network services, and system state.`, strings.Title(meta.AppName)),
+network services, and system state.`, "Tack"),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

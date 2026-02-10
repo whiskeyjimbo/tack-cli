@@ -28,7 +28,7 @@ func TestPluginRunner_LoadPlugin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewPluginRunner: %v", err)
 	}
-	defer runner.Close(ctx)
+	defer func() { _ = runner.Close(ctx) }()
 
 	plugin, err := runner.LoadPlugin(ctx, wasmBytes)
 	if err != nil {
@@ -49,7 +49,7 @@ func TestPluginRunner_Check(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewPluginRunner: %v", err)
 	}
-	defer runner.Close(ctx)
+	defer func() { _ = runner.Close(ctx) }()
 
 	plugin, err := runner.LoadPlugin(ctx, wasmBytes)
 	if err != nil {

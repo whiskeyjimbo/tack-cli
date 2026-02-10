@@ -57,7 +57,7 @@ func FetchIndex(ctx context.Context, url string) (*PluginIndex, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fetching index: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("index returned %d", resp.StatusCode)
@@ -95,7 +95,6 @@ func SearchAll(ctx context.Context, sources []IndexSource, query string, forceRe
 
 	for _, src := range sources {
 		idx, err := cachedFetch(ctx, src, cacheDir, maxAge)
-
 		if err != nil {
 			// Warn but don't fail — one bad index shouldn't block others
 			fmt.Fprintf(os.Stderr, "Warning: failed to fetch %s index: %v\n", src.Name, err)

@@ -89,12 +89,3 @@ func registerOutputFormatCompletion(cmd *cobra.Command) {
 		}, cobra.ShellCompDirectiveNoFileComp
 	})
 }
-
-// registerPluginPathCompletion registers file completion for --plugin-path.
-// This uses the default file completion behavior (complete .wasm files).
-func registerPluginPathCompletion(cmd *cobra.Command) {
-	_ = cmd.RegisterFlagCompletionFunc("plugin-path", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		// Return .wasm file extension filter
-		return []string{"wasm"}, cobra.ShellCompDirectiveFilterFileExt
-	})
-}

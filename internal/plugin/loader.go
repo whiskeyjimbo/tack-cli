@@ -293,7 +293,7 @@ func (l *Loader) loadPluginBytes(ctx context.Context, data []byte, source, path 
 	if err != nil {
 		return nil, err
 	}
-	defer runner.Close(ctx)
+	defer func() { _ = runner.Close(ctx) }()
 
 	loaded, err := runner.LoadPlugin(ctx, data)
 	if err != nil {

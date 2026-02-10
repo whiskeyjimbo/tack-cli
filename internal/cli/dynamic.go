@@ -119,7 +119,7 @@ func createOperationCommand(
 			if err != nil {
 				return fmt.Errorf("creating runtime: %w", err)
 			}
-			defer runner.Close(ctx)
+			defer func() { _ = runner.Close(ctx) }()
 
 			plugin, err := runner.LoadPlugin(ctx, wasmBytes)
 			if err != nil {

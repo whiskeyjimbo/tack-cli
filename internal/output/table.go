@@ -25,18 +25,18 @@ type TableFormatter struct{}
 func (f *TableFormatter) Format(w io.Writer, result abi.Result, outputSchema json.RawMessage) error {
 	if !result.IsSuccess() {
 		// For non-success, print status and message
-		fmt.Fprintf(w, "Status: %s\n", result.Status)
+		_, _ = fmt.Fprintf(w, "Status: %s\n", result.Status)
 		if result.Message != "" {
-			fmt.Fprintf(w, "Message: %s\n", result.Message)
+			_, _ = fmt.Fprintf(w, "Message: %s\n", result.Message)
 		}
 		if result.Error != nil {
-			fmt.Fprintf(w, "Error: [%s] %s\n", result.Error.Type, result.Error.Message)
+			_, _ = fmt.Fprintf(w, "Error: [%s] %s\n", result.Error.Type, result.Error.Message)
 		}
 		return nil
 	}
 
 	if len(result.Data) == 0 {
-		fmt.Fprintln(w, "(no data)")
+		_, _ = fmt.Fprintln(w, "(no data)")
 		return nil
 	}
 

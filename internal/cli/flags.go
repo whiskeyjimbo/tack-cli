@@ -104,7 +104,7 @@ func addFlagsForOperation(cmd *cobra.Command, schema *parsedSchema, inputFields 
 		case "integer":
 			defaultVal := 0
 			if hasUserDefault {
-				fmt.Sscanf(userDefault, "%d", &defaultVal)
+				_, _ = fmt.Sscanf(userDefault, "%d", &defaultVal)
 			} else if prop.Default != nil {
 				if f, ok := prop.Default.(float64); ok {
 					defaultVal = int(f)

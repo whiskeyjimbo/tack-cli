@@ -49,12 +49,12 @@ func newPluginListCommand(stack *internalplugin.PluginStack) *cobra.Command {
 
 			out := cmd.OutOrStdout()
 			if len(plugins) == 0 {
-				fmt.Fprintln(out, "No plugins installed in local cache.")
+				_, _ = fmt.Fprintln(out, "No plugins installed in local cache.")
 				return nil
 			}
 
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tVERSION\tDIGEST\tDESCRIPTION")
+			_, _ = fmt.Fprintln(w, "NAME\tVERSION\tDIGEST\tDESCRIPTION")
 			for _, p := range plugins {
 				meta := p.Metadata()
 				digest := p.Digest().String()
@@ -62,7 +62,7 @@ func newPluginListCommand(stack *internalplugin.PluginStack) *cobra.Command {
 				if len(digest) > 19 {
 					digest = digest[:19] + "..."
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 					meta.Name(), meta.Version(), digest, meta.Description())
 			}
 			return w.Flush()
@@ -101,7 +101,7 @@ Examples:
 			// Build full OCI reference from short name or full reference
 			ref := resolveOCIRef(target, defaultRegistry)
 
-			fmt.Fprintf(out, "Pulling %s ...\n", ref)
+			_, _ = fmt.Fprintf(out, "Pulling %s ...\n", ref)
 
 			pluginRef, err := hostvalues.ParsePluginReference(ref)
 			if err != nil {
@@ -115,7 +115,7 @@ Examples:
 			}
 
 			meta := artifact.Metadata()
-			fmt.Fprintf(out, "Installed %s@%s\n", meta.Name(), meta.Version())
+			_, _ = fmt.Fprintf(out, "Installed %s@%s\n", meta.Name(), meta.Version())
 
 			return nil
 		},
@@ -124,13 +124,13 @@ Examples:
 
 // installFromLocalFile installs a .wasm file into the local cache.
 func installFromLocalFile(ctx context.Context, stack *internalplugin.PluginStack, path string, out io.Writer) error {
-	fmt.Fprintf(out, "Installing from local file: %s\n", path)
+	_, _ = fmt.Fprintf(out, "Installing from local file: %s\n", path)
 
 	f, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("opening plugin file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Extract name from filename
 	name := strings.TrimSuffix(filepath.Base(path), ".wasm")
@@ -147,7 +147,9 @@ func installFromLocalFile(ctx context.Context, stack *internalplugin.PluginStack
 	}
 
 	// Re-open for storage
-	f.Seek(0, 0)
+	if _, err := f.Seek(0, 0); err != nil {
+		return fmt.Errorf("resetting file pointer: %w", err)
+	}
 
 	metadata := hostvalues.NewPluginMetadata(name, "local", "", nil)
 	plugin := hostentities.NewPlugin(ref, digest, metadata)
@@ -157,7 +159,7 @@ func installFromLocalFile(ctx context.Context, stack *internalplugin.PluginStack
 		return fmt.Errorf("storing plugin: %w", err)
 	}
 
-	fmt.Fprintf(out, "Installed %q to %s\n", name, storedPath)
+	_, _ = fmt.Fprintf(out, "Installed %q to %s\n", name, storedPath)
 	return nil
 }
 
@@ -178,7 +180,7 @@ func newPluginRemoveCommand(stack *internalplugin.PluginStack) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Removed plugin %q\n", args[0])
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Removed plugin %q\n", args[0])
 			return nil
 		},
 	}
@@ -195,7 +197,7 @@ func newPluginPruneCommand(stack *internalplugin.PluginStack) *cobra.Command {
 			if err := stack.Service.PruneCache(cmd.Context(), keepVersions); err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Pruned plugin cache (keeping %d versions per plugin)\n", keepVersions)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Pruned plugin cache (keeping %d versions per plugin)\n", keepVersions)
 			return nil
 		},
 	}
@@ -211,14 +213,14 @@ func newPluginRefreshCommand(stack *internalplugin.PluginStack) *cobra.Command {
 		Short: "Rebuild the plugin discovery cache",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
-			fmt.Fprintln(out, "Refreshing plugin cache...")
+			_, _ = fmt.Fprintln(out, "Refreshing plugin cache...")
 
 			// Delete manifest discovery cache to force full rebuild
 			cachePath := internalplugin.DefaultCachePath()
 			_ = os.Remove(cachePath)
 
 			// Re-run discovery (caller must reinvoke with new loader)
-			fmt.Fprintln(out, "Discovery cache cleared. Restart the CLI to rebuild.")
+			_, _ = fmt.Fprintln(out, "Discovery cache cleared. Restart the CLI to rebuild.")
 			return nil
 		},
 	}
@@ -271,19 +273,19 @@ func newPluginSearchCommand(cfg *config.Config) *cobra.Command {
 			}
 
 			if len(results) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "No plugins found.")
+				_, _ = fmt.Fprintln(cmd.OutOrStdout(), "No plugins found.")
 				return nil
 			}
 
 			// Print as table
 			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "PLUGIN\tVERSION\tCAPABILITIES\tSOURCE\tDESCRIPTION")
+			_, _ = fmt.Fprintln(w, "PLUGIN\tVERSION\tCAPABILITIES\tSOURCE\tDESCRIPTION")
 			for _, r := range results {
 				caps := ""
 				if len(r.Capabilities) > 0 {
 					caps = strings.Join(r.Capabilities, ",")
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 					r.Name, r.Latest,
 					caps,
 					r.Source, r.Description)

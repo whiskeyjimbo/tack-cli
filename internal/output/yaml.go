@@ -16,7 +16,7 @@ type YAMLFormatter struct{}
 func (f *YAMLFormatter) Format(w io.Writer, result abi.Result, _ json.RawMessage) error {
 	enc := yaml.NewEncoder(w)
 	enc.SetIndent(2)
-	defer enc.Close()
+	defer func() { _ = enc.Close() }()
 
 	if result.IsSuccess() && result.Data != nil {
 		return enc.Encode(result.Data)
