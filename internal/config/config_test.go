@@ -79,8 +79,8 @@ func TestLoad_Malformed(t *testing.T) {
 func TestApplyEnvOverrides(t *testing.T) {
 	cfg := DefaultConfig()
 
-	t.Setenv("CLI_OUTPUT", "yaml")
-	t.Setenv("CLI_TIMEOUT", "120s")
+	t.Setenv("TACK_OUTPUT", "yaml")
+	t.Setenv("TACK_TIMEOUT", "120s")
 
 	cfg.ApplyEnvOverrides()
 

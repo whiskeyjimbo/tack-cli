@@ -287,7 +287,9 @@ func (l *Loader) loadLocalPlugins(ctx context.Context, cache *DiscoveryCache) ([
 }
 
 func (l *Loader) loadPluginBytes(ctx context.Context, data []byte, source, path string) (*DiscoveredPlugin, error) {
-	runner, err := runtime.NewPluginRunner(ctx)
+	// We trust plugins during discovery because we only read the manifest
+	// and do not execute any operations.
+	runner, err := runtime.NewPluginRunner(ctx, runtime.WithTrustPlugins(true))
 	if err != nil {
 		return nil, err
 	}

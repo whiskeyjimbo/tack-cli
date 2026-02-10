@@ -24,7 +24,7 @@ func TestPluginRunner_LoadPlugin(t *testing.T) {
 	wasmBytes := testWASMPath(t)
 	ctx := context.Background()
 
-	runner, err := runtime.NewPluginRunner(ctx)
+	runner, err := runtime.NewPluginRunner(ctx, runtime.WithTrustPlugins(true))
 	if err != nil {
 		t.Fatalf("NewPluginRunner: %v", err)
 	}
@@ -45,7 +45,7 @@ func TestPluginRunner_Check(t *testing.T) {
 	wasmBytes := testWASMPath(t)
 	ctx := context.Background()
 
-	runner, err := runtime.NewPluginRunner(ctx)
+	runner, err := runtime.NewPluginRunner(ctx, runtime.WithTrustPlugins(true))
 	if err != nil {
 		t.Fatalf("NewPluginRunner: %v", err)
 	}
