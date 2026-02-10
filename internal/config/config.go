@@ -37,6 +37,15 @@ type Config struct {
 	// PluginDefaults holds per-plugin default flag values.
 	// Example: {"aws": {"region": "us-east-1"}}
 	PluginDefaults map[string]map[string]string `yaml:"plugin_defaults"`
+
+	// Indexes lists additional plugin search indexes.
+	Indexes []IndexSource `yaml:"indexes"`
+}
+
+// IndexSource defines a plugin index location.
+type IndexSource struct {
+	URL  string `yaml:"url"`
+	Name string `yaml:"name"`
 }
 
 // DefaultConfig returns a Config with sensible defaults.

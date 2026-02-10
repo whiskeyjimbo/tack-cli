@@ -12,12 +12,13 @@ import (
 	hostentities "github.com/reglet-dev/reglet-host-sdk/plugin/entities"
 	hostvalues "github.com/reglet-dev/reglet-host-sdk/plugin/values"
 	"github.com/spf13/cobra"
+	"github.com/whiskeyjimb/tack-cli/internal/config"
 	"github.com/whiskeyjimb/tack-cli/internal/meta"
 	internalplugin "github.com/whiskeyjimb/tack-cli/internal/plugin"
 )
 
 // newPluginCommand creates the "plugin" management command group.
-func newPluginCommand(stack *internalplugin.PluginStack, defaultRegistry string) *cobra.Command {
+func newPluginCommand(stack *internalplugin.PluginStack, cfg *config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plugin",
 		Short: "Manage plugins",
@@ -25,7 +26,8 @@ func newPluginCommand(stack *internalplugin.PluginStack, defaultRegistry string)
 
 	cmd.AddCommand(
 		newPluginListCommand(stack),
-		newPluginInstallCommand(stack, defaultRegistry),
+		newPluginSearchCommand(cfg),
+		newPluginInstallCommand(stack, cfg.DefaultRegistry),
 		newPluginRemoveCommand(stack),
 		newPluginPruneCommand(stack),
 		newPluginRefreshCommand(stack),
@@ -244,18 +246,73 @@ func parseNameVersion(s string) (name, version string) {
 	return s, ""
 }
 
-// formatSize formats bytes into a human-readable string.
-func formatSize(bytes int64) string {
-	const (
-		kb = 1024
-		mb = kb * 1024
-	)
-	switch {
-	case bytes >= mb:
-		return fmt.Sprintf("%.1f MB", float64(bytes)/float64(mb))
-	case bytes >= kb:
-		return fmt.Sprintf("%.1f KB", float64(bytes)/float64(kb))
-	default:
-		return fmt.Sprintf("%d B", bytes)
+func newPluginSearchCommand(cfg *config.Config) *cobra.Command {
+	var indexFilter string
+	var forceRefresh bool
+
+	cmd := &cobra.Command{
+		Use:   "search [query]",
+		Short: "Search available plugins",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			query := ""
+			if len(args) > 0 {
+				query = args[0]
+			}
+
+			sources := buildIndexSources(cfg)
+			if indexFilter != "" {
+				sources = filterSources(sources, indexFilter)
+			}
+
+			results, err := internalplugin.SearchAll(cmd.Context(), sources, query, forceRefresh)
+			if err != nil {
+				return err
+			}
+
+			if len(results) == 0 {
+				fmt.Fprintln(cmd.OutOrStdout(), "No plugins found.")
+				return nil
+			}
+
+			// Print as table
+			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+			fmt.Fprintln(w, "PLUGIN\tVERSION\tCAPABILITIES\tSOURCE\tDESCRIPTION")
+			for _, r := range results {
+				caps := ""
+				if len(r.Capabilities) > 0 {
+					caps = strings.Join(r.Capabilities, ",")
+				}
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+					r.Name, r.Latest,
+					caps,
+					r.Source, r.Description)
+			}
+			return w.Flush()
+		},
 	}
+
+	cmd.Flags().StringVar(&indexFilter, "index", "", "Search a specific index only")
+	cmd.Flags().BoolVar(&forceRefresh, "refresh", false, "Force refresh of plugin indexes")
+	return cmd
+}
+
+func buildIndexSources(cfg *config.Config) []internalplugin.IndexSource {
+	sources := []internalplugin.IndexSource{
+		{URL: internalplugin.DefaultIndexURL, Name: "official"},
+	}
+	for _, idx := range cfg.Indexes {
+		sources = append(sources, internalplugin.IndexSource{URL: idx.URL, Name: idx.Name})
+	}
+	return sources
+}
+
+func filterSources(sources []internalplugin.IndexSource, name string) []internalplugin.IndexSource {
+	var filtered []internalplugin.IndexSource
+	for _, s := range sources {
+		if s.Name == name {
+			filtered = append(filtered, s)
+		}
+	}
+	return filtered
 }

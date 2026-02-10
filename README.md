@@ -26,7 +26,20 @@ Output as `--output table` (default), `json`, `yaml`, or `--quiet` (exit code on
 
 ## Plugins
 
+Official plugins from [reglet-plugins](https://github.com/reglet-dev/reglet-plugins):
+
+| Plugin | Description |
+|--------|-------------|
+| aws | AWS infrastructure inspection and compliance |
+| command | Execute commands and validate output |
+| dns | DNS resolution and record validation |
+| file | File system checks and validation |
+| http | HTTP/HTTPS request checking and validation |
+| smtp | SMTP connection testing and server validation |
+| tcp | TCP connection testing and TLS validation |
+
 ```bash
+tack plugin search                                        # browse available plugins
 tack plugin install dns                                   # from default registry
 tack plugin install dns@1.2.0                             # pinned version
 tack plugin install ghcr.io/my-org/plugins/custom:1.0.0   # custom registry

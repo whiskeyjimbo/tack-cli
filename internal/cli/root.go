@@ -51,7 +51,7 @@ network services, and system state.`, strings.Title(meta.AppName)),
 
 	// Plugin management (uses host-sdk PluginService)
 	if stack != nil {
-		root.AddCommand(newPluginCommand(stack, cfg.DefaultRegistry))
+		root.AddCommand(newPluginCommand(stack, cfg))
 	}
 
 	// Register flag completions
