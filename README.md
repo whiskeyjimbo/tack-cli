@@ -1,4 +1,4 @@
-# tack
+# ![logo-small](.github/assets/tack-rotate.png) Tack
 
 Pluggable CLI that runs WASM plugins built with the [reglet SDK](https://github.com/reglet-dev/reglet-plugin-sdk). Each plugin contributes its own commands, flags, and completions.
 
