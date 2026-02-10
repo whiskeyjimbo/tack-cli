@@ -2,6 +2,13 @@
 
 Pluggable CLI that runs WASM plugins built with the [reglet SDK](https://github.com/reglet-dev/reglet-plugin-sdk). Each plugin contributes its own commands, flags, and completions.
 
+<p align="center">
+  <a href="https://github.com/whiskeyjimbo/tack-cli/actions"><img src="https://github.com/whiskeyjimbo/tack-cli/workflows/CI/badge.svg" alt="Build Status"></a>
+  <a href="https://goreportcard.com/report/github.com/whiskeyjimbo/tack-cli"><img src="https://goreportcard.com/badge/github.com/whiskeyjimbo/tack-cli?style=flat" alt="Go Report Card"></a>
+  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
+  <img src="https://img.shields.io/github/v/release/whiskeyjimbo/tack-cli?include_prereleases" alt="Latest Release">
+</p>
+
 ## Usage
 
 ```
