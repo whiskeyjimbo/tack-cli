@@ -1,8 +1,8 @@
-module fixture
+module tackfixture
 
-go 1.25.5
+go 1.25.7
 
-require github.com/reglet-dev/reglet-host-sdk/plugin v0.6.0
+require github.com/reglet-dev/reglet-plugin-sdk v0.6.0
 
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
