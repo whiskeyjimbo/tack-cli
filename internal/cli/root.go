@@ -23,10 +23,10 @@ func NewRootCommand(cfg *config.Config, stack *pluginpkg.PluginStack) *cobra.Com
 
 	root := &cobra.Command{
 		Use:   meta.AppName,
-		Short: "Infrastructure inspection tool powered by WASM plugins",
-		Long: fmt.Sprintf(`%s is a general-purpose pluggable tool that leverages
-WASM plugins to provide a unified interface for querying cloud resources,
-network services, and system state.`, "Tack"),
+		Short: "One CLI, many plugins",
+		Long: fmt.Sprintf(`%s is a single CLI that grows with plugins. Each plugin brings its own
+commands, flags, and completions. Output is consistent across all of them.
+Plugins are sandboxed WASM modules, installable from OCI registries.`, "Tack"),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

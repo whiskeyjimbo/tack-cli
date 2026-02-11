@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	abi "github.com/reglet-dev/reglet-abi"
 )
 
@@ -16,12 +17,6 @@ import (
 type TableFormatter struct{}
 
 // Format renders result.Data as a table.
-//
-// Column order is determined by:
-//  1. outputSchema properties order (if provided and parseable)
-//  2. Sorted keys from result.Data (fallback)
-//
-// Array values are joined with ", ". Nested objects are JSON-encoded.
 func (f *TableFormatter) Format(w io.Writer, result abi.Result, outputSchema json.RawMessage) error {
 	if !result.IsSuccess() {
 		// For non-success, print status and message
@@ -47,28 +42,30 @@ func (f *TableFormatter) Format(w io.Writer, result abi.Result, outputSchema jso
 	}
 
 	// Build table
-	table := tablewriter.NewWriter(w)
+	table := tablewriter.NewTable(w,
+		tablewriter.WithHeaderAutoFormat(tw.Off),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+		tablewriter.WithRendition(tw.Rendition{
+			Borders: tw.Border{Top: tw.On, Bottom: tw.On, Left: tw.On, Right: tw.On},
+		}),
+	)
 
 	// Header: convert snake_case to Title Case
-	headers := make([]string, len(columns))
+	headers := make([]interface{}, len(columns))
 	for i, col := range columns {
 		headers[i] = snakeToTitle(col)
 	}
-	table.SetAutoFormatHeaders(false)
-	table.SetHeader(headers)
+	table.Header(headers...)
 
 	// Single row (most plugin results are single-record)
-	row := make([]string, len(columns))
+	row := make([]interface{}, len(columns))
 	for i, col := range columns {
 		row[i] = formatValue(result.Data[col])
 	}
-	table.Append(row)
+	table.Append(row...)
 
-	table.SetBorder(true)
-	table.SetAutoWrapText(false)
-	table.Render()
-
-	return nil
+	// Render returns error now
+	return table.Render()
 }
 
 // columnsFromSchema extracts property names from a JSON Schema object.
