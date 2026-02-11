@@ -62,7 +62,7 @@ func (f *TableFormatter) Format(w io.Writer, result abi.Result, outputSchema jso
 	for i, col := range columns {
 		row[i] = formatValue(result.Data[col])
 	}
-	table.Append(row...)
+	_ = table.Append(row...)
 
 	// Render returns error now
 	return table.Render()

@@ -14,7 +14,7 @@ import (
 func TestPluginCommand_ListEmpty(t *testing.T) {
 	dir := t.TempDir()
 	stack, _ := pluginpkg.NewPluginStack(pluginpkg.PluginServiceConfig{CacheDir: dir})
-	root := NewRootCommand(config.DefaultConfig(), stack)
+	root := NewRootCommand(config.DefaultConfig(), stack, "")
 
 	var buf bytes.Buffer
 	root.SetOut(&buf)

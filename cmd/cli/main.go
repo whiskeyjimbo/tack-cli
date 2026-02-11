@@ -25,6 +25,11 @@ func main() {
 	}
 	cfg.ApplyEnvOverrides()
 
+	if err := cfg.ValidateGroups(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: invalid group config: %v\n", err)
+		cfg.Groups = nil
+	}
+
 	// Initialize plugin service stack
 	stack, err := plugin.NewPluginStack(plugin.PluginServiceConfig{
 		RequireSigning: cfg.RequireSigning,
@@ -34,7 +39,7 @@ func main() {
 		// We continue without the stack (OCI fallback will be disabled)
 	}
 
-	root := internalcli.NewRootCommand(cfg, stack)
+	root := internalcli.NewRootCommand(cfg, stack, config.DefaultConfigPath())
 
 	// Discover and register plugin commands
 	outputFormat := cfg.Output
@@ -62,15 +67,31 @@ func main() {
 				unknownCmd := parts[1]
 				fmt.Fprintf(os.Stderr, "Error: plugin %q not found\n", unknownCmd)
 
-				// Find installed plugins
+				// Check if the unknown command is a plugin inside a group
+				if cfg.Groups != nil {
+					for groupName, groupCfg := range cfg.Groups {
+						for _, pluginName := range groupCfg.Plugins {
+							if pluginName == unknownCmd {
+								fmt.Fprintf(os.Stderr, "  Hint: %q is in the %q group. Try: %s %s %s ...\n",
+									unknownCmd, groupName, meta.AppName, groupName, unknownCmd)
+							}
+						}
+					}
+				}
+
+				// List available top-level commands
 				var installed []string
+				staticCmds := map[string]bool{
+					"completion": true, "help": true, "plugin": true,
+					"version": true, "group": true,
+				}
 				for _, cmd := range root.Commands() {
-					if cmd.Name() != "completion" && cmd.Name() != "help" && cmd.Name() != "plugin" && cmd.Name() != "version" {
+					if !staticCmds[cmd.Name()] {
 						installed = append(installed, cmd.Name())
 					}
 				}
 				if len(installed) > 0 {
-					fmt.Fprintf(os.Stderr, "  Installed plugins: %s\n", strings.Join(installed, ", "))
+					fmt.Fprintf(os.Stderr, "  Available: %s\n", strings.Join(installed, ", "))
 				}
 				fmt.Fprintf(os.Stderr, "  To install: %s plugin install %s\n", meta.AppName, unknownCmd)
 				os.Exit(1)

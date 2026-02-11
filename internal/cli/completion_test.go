@@ -9,7 +9,7 @@ import (
 )
 
 func TestCompletionCommand_Bash(t *testing.T) {
-	root := NewRootCommand(config.DefaultConfig(), nil)
+	root := NewRootCommand(config.DefaultConfig(), nil, "")
 
 	var buf bytes.Buffer
 	root.SetOut(&buf)
@@ -26,7 +26,7 @@ func TestCompletionCommand_Bash(t *testing.T) {
 }
 
 func TestCompletionCommand_Zsh(t *testing.T) {
-	root := NewRootCommand(config.DefaultConfig(), nil)
+	root := NewRootCommand(config.DefaultConfig(), nil, "")
 
 	var buf bytes.Buffer
 	root.SetOut(&buf)
@@ -43,7 +43,7 @@ func TestCompletionCommand_Zsh(t *testing.T) {
 }
 
 func TestCompletionCommand_Fish(t *testing.T) {
-	root := NewRootCommand(config.DefaultConfig(), nil)
+	root := NewRootCommand(config.DefaultConfig(), nil, "")
 
 	var buf bytes.Buffer
 	root.SetOut(&buf)
@@ -60,7 +60,7 @@ func TestCompletionCommand_Fish(t *testing.T) {
 }
 
 func TestCompletionCommand_InvalidShell(t *testing.T) {
-	root := NewRootCommand(config.DefaultConfig(), nil)
+	root := NewRootCommand(config.DefaultConfig(), nil, "")
 
 	root.SetArgs([]string{"completion", "invalid"})
 
@@ -71,7 +71,7 @@ func TestCompletionCommand_InvalidShell(t *testing.T) {
 }
 
 func TestCompletionCommand_NoArgs(t *testing.T) {
-	root := NewRootCommand(config.DefaultConfig(), nil)
+	root := NewRootCommand(config.DefaultConfig(), nil, "")
 
 	root.SetArgs([]string{"completion"})
 

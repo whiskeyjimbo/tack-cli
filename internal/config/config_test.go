@@ -91,3 +91,114 @@ func TestApplyEnvOverrides(t *testing.T) {
 		t.Errorf("expected timeout '120s' from env, got %q", cfg.Timeout)
 	}
 }
+
+func TestLoad_WithGroups(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	content := []byte(`output: json
+groups:
+  network:
+    description: "Network inspection tools"
+    plugins:
+      - dns
+      - http
+  cloud:
+    description: "Cloud provider tools"
+    plugins:
+      - aws
+`)
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(cfg.Groups) != 2 {
+		t.Fatalf("expected 2 groups, got %d", len(cfg.Groups))
+	}
+
+	net := cfg.Groups["network"]
+	if net.Description != "Network inspection tools" {
+		t.Errorf("expected network description, got %q", net.Description)
+	}
+	if len(net.Plugins) != 2 || net.Plugins[0] != "dns" || net.Plugins[1] != "http" {
+		t.Errorf("expected [dns, http], got %v", net.Plugins)
+	}
+
+	cloud := cfg.Groups["cloud"]
+	if len(cloud.Plugins) != 1 || cloud.Plugins[0] != "aws" {
+		t.Errorf("expected [aws], got %v", cloud.Plugins)
+	}
+}
+
+func TestValidateGroups_ReservedName(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Groups = map[string]GroupConfig{
+		"plugin": {Description: "test", Plugins: []string{"dns"}},
+	}
+	if err := cfg.ValidateGroups(); err == nil {
+		t.Error("expected error for reserved group name")
+	}
+}
+
+func TestValidateGroups_EmptyPlugins(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Groups = map[string]GroupConfig{
+		"empty": {Description: "test", Plugins: []string{}},
+	}
+	// Empty plugin lists are allowed (groups may be in progress)
+	if err := cfg.ValidateGroups(); err != nil {
+		t.Errorf("unexpected error for empty plugins: %v", err)
+	}
+}
+
+func TestValidateGroups_Valid(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Groups = map[string]GroupConfig{
+		"network": {Description: "Network tools", Plugins: []string{"dns", "http"}},
+	}
+	if err := cfg.ValidateGroups(); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidateGroups_NoGroups(t *testing.T) {
+	cfg := DefaultConfig()
+	if err := cfg.ValidateGroups(); err != nil {
+		t.Errorf("unexpected error with nil groups: %v", err)
+	}
+}
+
+func TestSave_RoundTrip(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Groups = map[string]GroupConfig{
+		"network": {Description: "Network tools", Plugins: []string{"dns", "http"}},
+	}
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+
+	if err := cfg.Save(path); err != nil {
+		t.Fatalf("save error: %v", err)
+	}
+
+	loaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("load error: %v", err)
+	}
+
+	if len(loaded.Groups) != 1 {
+		t.Fatalf("expected 1 group, got %d", len(loaded.Groups))
+	}
+
+	net := loaded.Groups["network"]
+	if net.Description != "Network tools" {
+		t.Errorf("description mismatch: %q", net.Description)
+	}
+	if len(net.Plugins) != 2 {
+		t.Errorf("expected 2 plugins, got %d", len(net.Plugins))
+	}
+}

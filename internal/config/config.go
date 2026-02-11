@@ -40,12 +40,25 @@ type Config struct {
 
 	// Indexes lists additional plugin search indexes.
 	Indexes []IndexSource `yaml:"indexes"`
+
+	// Groups maps group names to their configuration.
+	// Plugins in a group are accessed as: tack <group> <plugin> <operation>
+	Groups map[string]GroupConfig `yaml:"groups,omitempty"`
 }
 
 // IndexSource defines a plugin index location.
 type IndexSource struct {
 	URL  string `yaml:"url"`
 	Name string `yaml:"name"`
+}
+
+// GroupConfig defines a named plugin group.
+type GroupConfig struct {
+	// Description is the help text shown for the group command.
+	Description string `yaml:"description"`
+
+	// Plugins lists plugin names that belong to this group.
+	Plugins []string `yaml:"plugins"`
 }
 
 // DefaultConfig returns a Config with sensible defaults.
@@ -115,4 +128,48 @@ func (c *Config) ApplyEnvOverrides() {
 	if v := os.Getenv(prefix + "DEFAULT_REGISTRY"); v != "" {
 		c.DefaultRegistry = v
 	}
+}
+
+// reservedCommands lists built-in command names that cannot be used as group names.
+var reservedCommands = map[string]bool{
+	"completion": true,
+	"version":    true,
+	"plugin":     true,
+	"group":      true,
+	"help":       true,
+}
+
+// ValidateGroups checks group configuration for errors.
+// Only checks for critical errors (empty name, reserved name).
+// Empty plugin lists are allowed since groups may be in the process of being configured.
+func (c *Config) ValidateGroups() error {
+	for name := range c.Groups {
+		if name == "" {
+			return fmt.Errorf("group name cannot be empty")
+		}
+		if reservedCommands[name] {
+			return fmt.Errorf("group name %q conflicts with built-in command", name)
+		}
+	}
+	return nil
+}
+
+// Save writes the config to the given path as YAML.
+// Creates parent directories if they don't exist.
+func (c *Config) Save(path string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("creating config directory: %w", err)
+	}
+
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("marshaling config: %w", err)
+	}
+
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return fmt.Errorf("writing config: %w", err)
+	}
+
+	return nil
 }

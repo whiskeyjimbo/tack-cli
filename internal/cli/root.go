@@ -13,7 +13,7 @@ import (
 )
 
 // NewRootCommand creates the top-level CLI command with dynamic plugin loading.
-func NewRootCommand(cfg *config.Config, stack *pluginpkg.PluginStack) *cobra.Command {
+func NewRootCommand(cfg *config.Config, stack *pluginpkg.PluginStack, configPath string) *cobra.Command {
 	var (
 		outputFormat string
 		verbose      bool
@@ -53,6 +53,9 @@ Plugins are sandboxed WASM modules, installable from OCI registries.`, "Tack"),
 		root.AddCommand(newPluginCommand(stack, cfg))
 	}
 
+	// Group management
+	root.AddCommand(newGroupCommand(cfg, configPath))
+
 	// Register flag completions
 	registerOutputFormatCompletion(root)
 
@@ -82,15 +85,42 @@ func RegisterPluginCommands(root *cobra.Command, outputFormat *string, verbose *
 		return nil
 	}
 
-	for _, dp := range discovered {
-		dp := dp // capture for closure
+	// Helper to generate a plugin command for a given DiscoveredPlugin.
+	makePluginCmd := func(dp pluginpkg.DiscoveredPlugin) *cobra.Command {
 		var defaults map[string]string
 		if cfg != nil && cfg.PluginDefaults != nil {
 			defaults = cfg.PluginDefaults[dp.Manifest.Name]
 		}
+		return generatePluginCommand(dp.Manifest, dp.Loader, outputFormat, verbose, trustPlugins, defaults)
+	}
 
-		pluginCmd := generatePluginCommand(dp.Manifest, dp.Loader, outputFormat, verbose, trustPlugins, defaults)
-		root.AddCommand(pluginCmd)
+	// Ensure "top" group exists with all plugins by default
+	if cfg.Groups == nil {
+		cfg.Groups = make(map[string]config.GroupConfig)
+	}
+	if _, exists := cfg.Groups["top"]; !exists {
+		// Create default "top" group with all discovered plugins
+		var allPluginNames []string
+		for _, dp := range discovered {
+			if dp.Manifest.Name != "" {
+				allPluginNames = append(allPluginNames, dp.Manifest.Name)
+			}
+		}
+		cfg.Groups["top"] = config.GroupConfig{
+			Description: "Top-level plugins",
+			Plugins:     allPluginNames,
+		}
+	}
+
+	// Register groups (including the special "top" group)
+	topGroupPlugins := registerGroups(root, cfg.Groups, discovered, makePluginCmd)
+
+	// Register plugins at the top level if they're in the "top" group
+	for _, dp := range discovered {
+		if topGroupPlugins[dp.Manifest.Name] {
+			pluginCmd := makePluginCmd(dp)
+			root.AddCommand(pluginCmd)
+		}
 	}
 
 	return nil

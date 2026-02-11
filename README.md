@@ -56,6 +56,67 @@ tack plugin remove dns
 tack plugin prune --keep 3
 ```
 
+## Plugin Groups
+
+Organize plugins into named groups for better command structure. The special `top` group controls which plugins appear at the root level.
+
+### The "top" Group
+
+By default, all plugins are in the `top` group and appear at the root level:
+
+```bash
+tack dns resolve --hostname example.com
+tack tcp connect --host db.internal --port 5432
+```
+
+### Creating Custom Groups
+
+```bash
+# Create a group
+tack group create network --description "Network inspection tools"
+
+# Add plugins to the group
+tack group add network dns tcp http
+
+# Now these plugins appear under the network group
+tack network dns resolve --hostname example.com
+tack network tcp connect --host db.internal --port 5432
+```
+
+### Managing Top-Level Access
+
+Remove plugins from `top` to hide them from the root level (they must be in another group first):
+
+```bash
+# Remove from top level (only works if plugin is in another group)
+tack group remove top dns
+
+# Now dns is only accessible via: tack network dns ...
+# Direct 'tack dns' no longer works
+```
+
+Add plugins back to top level:
+
+```bash
+tack group add top dns
+
+# Now accessible both ways:
+# - tack dns resolve ...
+# - tack network dns resolve ...
+```
+
+### Group Commands
+
+```bash
+tack group list                           # list all groups
+tack group create <name> --description "" # create a group
+tack group delete <name>                  # delete a group (cannot delete 'top')
+tack group add <group> <plugin>...        # add plugins to a group
+tack group remove <group> <plugin>...     # remove plugins from a group
+```
+
+**Note:** Plugins can be in multiple groups simultaneously. The `top` group cannot be deleted, and you cannot remove a plugin from `top` if it's not in any other group (to prevent it from becoming inaccessible).
+
 ## Configuration
 
 `~/.tack/config.yaml`
@@ -72,6 +133,19 @@ plugin_defaults:
 aliases:
   sg: aws ec2 describe_security_groups
   buckets: aws s3 list_buckets
+
+groups:
+  top:
+    description: Top-level plugins
+    plugins:
+      - aws
+      - command
+  network:
+    description: Network inspection tools
+    plugins:
+      - dns
+      - tcp
+      - http
 ```
 
 Aliases create top-level shortcuts: `tack sg --region us-west-2`.
