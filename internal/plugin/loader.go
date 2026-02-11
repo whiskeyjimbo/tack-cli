@@ -300,10 +300,36 @@ func (l *Loader) loadPluginBytes(ctx context.Context, data []byte, source, path 
 		return nil, err
 	}
 
+	// Create a loader that reads from source on demand, rather than
+	// capturing the 'data' byte slice in memory for the lifetime of the process.
+	// This prevents memory bloat during cold starts (e.g., 200MB for 20 plugins).
+	loader := l.createOnDemandLoader(source, path)
+
 	return &DiscoveredPlugin{
 		Manifest: loaded.Manifest,
-		Loader:   func() ([]byte, error) { return data, nil },
+		Loader:   loader,
 		Source:   source,
 		Path:     path,
 	}, nil
+}
+
+// createOnDemandLoader creates a loader function that reads WASM bytes from
+// the source (disk/FS) on demand, rather than caching them in memory.
+func (l *Loader) createOnDemandLoader(source, path string) func() ([]byte, error) {
+	switch source {
+	case "embedded":
+		// Remove "embedded://" prefix if present
+		fsPath := strings.TrimPrefix(path, "embedded://")
+		return func() ([]byte, error) {
+			return l.embeddedFS.ReadFile(fsPath)
+		}
+	case "local", "oci":
+		return func() ([]byte, error) {
+			return os.ReadFile(path)
+		}
+	default:
+		return func() ([]byte, error) {
+			return nil, fmt.Errorf("unknown plugin source: %s", source)
+		}
+	}
 }
