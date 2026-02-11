@@ -1,6 +1,6 @@
 # ![logo-small](.github/assets/tack-rotate.png) Tack
 
-Pluggable CLI that runs WASM plugins built with the [reglet SDK](https://github.com/reglet-dev/reglet-plugin-sdk). Each plugin contributes its own commands, flags, and completions.
+One CLI that grows with plugins. Each plugin brings its own commands, flags, and shell completions — install only what you need, and get a consistent interface across all of them. Output in table, JSON, or YAML. Plugins are sandboxed WASM modules distributed via OCI registries or local files, built with the [reglet SDK](https://github.com/reglet-dev/reglet-plugin-sdk).
 
 <p align="center">
   <a href="https://github.com/whiskeyjimbo/tack-cli/actions"><img src="https://github.com/whiskeyjimbo/tack-cli/workflows/CI/badge.svg" alt="Build Status"></a>

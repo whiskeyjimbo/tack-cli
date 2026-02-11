@@ -1,16 +1,26 @@
-# ──────────────────────────────────────────────────────────────
-#  Tack CLI
-# ──────────────────────────────────────────────────────────────
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║                               TACK MAKEFILE                               ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+#
+# Usage: make <target>
+# Run 'make help' for a list of available targets
+#
 
-BINARY   := tack
-CMD      := ./cmd/cli
-MODULE   := github.com/whiskeyjimb/tack-cli
+.PHONY: all build build-embed clean test test-v test-cover lint fmt fmt-check vet help install dev tidy check
 
-VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-COMMIT   ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
+# ─────────────────────────────────────────────────────────────────────────────
+# Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+BINARY_NAME := tack
+CMD         := ./cmd/cli
+MODULE      := github.com/whiskeyjimb/tack-cli
+
+VERSION   ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT    ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
 BUILDTIME := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
-LDFLAGS  := -s -w \
+LDFLAGS := -s -w \
   -X $(MODULE)/internal/cli.Version=$(VERSION) \
   -X $(MODULE)/internal/cli.Commit=$(COMMIT) \
   -X $(MODULE)/internal/cli.BuildTime=$(BUILDTIME)
@@ -18,51 +28,91 @@ LDFLAGS  := -s -w \
 GOFLAGS  ?=
 TAGS     ?=
 
+# Go commands
+GOCMD   := go
+GOBUILD := $(GOCMD) build
+GOCLEAN := $(GOCMD) clean
+GOTEST  := $(GOCMD) test
+GOGET   := $(GOCMD) get
+GOMOD   := $(GOCMD) mod
+GOFMT   := gofmt
+GOVET   := $(GOCMD) vet
+GOLINT  := golangci-lint
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Colors and Formatting
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Colors
-C_RESET  := \033[0m
-C_BOLD   := \033[1m
-C_DIM    := \033[2m
-C_CYAN   := \033[36m
-C_GREEN  := \033[32m
-C_YELLOW := \033[33m
-C_RED    := \033[31m
-C_CHECK  := $(C_GREEN)✓$(C_RESET)
-C_ARROW  := $(C_CYAN)→$(C_RESET)
+RESET   := \033[0m
+BOLD    := \033[1m
+RED     := \033[31m
+GREEN   := \033[32m
+YELLOW  := \033[33m
+BLUE    := \033[34m
+MAGENTA := \033[35m
+CYAN    := \033[36m
+WHITE   := \033[37m
 
-# ──────────────────────────────────────────────────────────────
-#  Build
-# ──────────────────────────────────────────────────────────────
+# Styled prefixes
+INFO    := @printf "$(BOLD)$(CYAN)▸$(RESET) "
+SUCCESS := @printf "$(BOLD)$(GREEN)✓$(RESET) "
+WARN    := @printf "$(BOLD)$(YELLOW)⚠$(RESET) "
+ERROR   := @printf "$(BOLD)$(RED)✗$(RESET) "
+STEP    := @printf "$(BOLD)$(MAGENTA)→$(RESET) "
 
-.PHONY: build
+# ═══════════════════════════════════════════════════════════════════════════════
+# PRIMARY TARGETS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+.DEFAULT_GOAL := help
+
+##@ Primary
+
+all: clean lint test build  ## Run full pipeline: clean → lint → test → build
+	$(SUCCESS)
+	@printf "$(GREEN)All tasks completed successfully!$(RESET)\n"
+
 build: ## Build the CLI binary
-	@printf "  $(C_ARROW) Building $(C_BOLD)$(BINARY)$(C_RESET) $(C_DIM)$(VERSION)$(C_RESET)\n"
-	@CGO_ENABLED=0 go build $(GOFLAGS) -tags "$(TAGS)" -ldflags "$(LDFLAGS)" -o $(BINARY) $(CMD)
-	@printf "  $(C_CHECK) $(C_BOLD)$(BINARY)$(C_RESET) $(C_DIM)$(shell ls -lh $(BINARY) 2>/dev/null | awk '{print $$5}')$(C_RESET)\n"
+	$(INFO)
+	@printf "Building $(BOLD)$(BINARY_NAME)$(RESET)...\n"
+	@mkdir -p bin
+	@CGO_ENABLED=0 $(GOBUILD) $(GOFLAGS) -tags "$(TAGS)" -ldflags "$(LDFLAGS)" -o bin/$(BINARY_NAME) $(CMD)
+	$(SUCCESS)
+	@printf "Binary built: $(GREEN)bin/$(BINARY_NAME)$(RESET)\n"
 
-.PHONY: build-embed
 build-embed: TAGS += embed_plugins
 build-embed: build ## Build with embedded plugins
 
-.PHONY: install
 install: ## Install to GOBIN
-	@printf "  $(C_ARROW) Installing $(C_BOLD)$(BINARY)$(C_RESET)\n"
-	@CGO_ENABLED=0 go install $(GOFLAGS) -tags "$(TAGS)" -ldflags "$(LDFLAGS)" $(CMD)
-	@printf "  $(C_CHECK) Installed to $(C_DIM)$$(go env GOBIN || go env GOPATH)/bin$(C_RESET)\n"
+	$(INFO)
+	@printf "Installing $(BOLD)$(BINARY_NAME)$(RESET)...\n"
+	@CGO_ENABLED=0 $(GOCMD) install $(GOFLAGS) -tags "$(TAGS)" -ldflags "$(LDFLAGS)" $(CMD)
+	$(SUCCESS)
+	@printf "Installed to $(GREEN)$(shell $(GOCMD) env GOBIN || $(GOCMD) env GOPATH)/bin/$(BINARY_NAME)$(RESET)\n"
 
-.PHONY: clean
+dev: tidy build ## Tidy, build — quick iteration loop
+
 clean: ## Remove build artifacts
-	@rm -f $(BINARY)
-	@go clean -cache -testcache 2>/dev/null || true
-	@printf "  $(C_CHECK) Clean\n"
+	$(INFO)
+	@printf "Cleaning build artifacts...\n"
+	@rm -rf bin/
+	@rm -f $(BINARY_NAME)
+	@$(GOCLEAN) -cache -testcache 2>/dev/null || true
+	@rm -rf coverage.out coverage.html
+	$(SUCCESS)
+	@printf "$(GREEN)Clean complete$(RESET)\n"
 
-# ──────────────────────────────────────────────────────────────
-#  Test
-# ──────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# TESTING
+# ═══════════════════════════════════════════════════════════════════════════════
 
-.PHONY: test
+##@ Testing
+
 test: ## Run tests
-	@printf "  $(C_ARROW) Testing\n"
-	@go test ./... -count=1 2>&1 | while IFS= read -r line; do \
+	$(INFO)
+	@printf "Running tests...\n"
+	@$(GOTEST) ./... -count=1 2>&1 | while IFS= read -r line; do \
 		case "$$line" in \
 			ok*) printf "  \033[32m✓\033[0m %s\n" "$$line" ;; \
 			FAIL*) printf "  \033[31m✗\033[0m %s\n" "$$line" ;; \
@@ -71,71 +121,88 @@ test: ## Run tests
 		esac; \
 	done
 
-.PHONY: test-v
 test-v: ## Run tests (verbose)
-	@go test -v ./... -count=1
+	$(INFO)
+	@printf "Running tests (verbose)...\n"
+	@$(GOTEST) -v ./... -count=1
 
-.PHONY: test-cover
 test-cover: ## Run tests with coverage report
-	@printf "  $(C_ARROW) Testing with coverage\n"
-	@go test ./... -count=1 -coverprofile=coverage.out
-	@go tool cover -func=coverage.out | tail -1 | awk '{printf "  $(C_CHECK) Coverage: $(C_BOLD)%s$(C_RESET)\n", $$3}'
+	$(INFO)
+	@printf "Running tests with coverage...\n"
+	@$(GOTEST) ./... -count=1 -coverprofile=coverage.out
+	@$(GOCMD) tool cover -func=coverage.out | tail -1 | awk '{printf "  $(SUCCESS)Coverage: $(BOLD)%s$(RESET)\n", $$3}'
 	@rm -f coverage.out
 
-# ──────────────────────────────────────────────────────────────
-#  Lint
-# ──────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# CODE QUALITY
+# ═══════════════════════════════════════════════════════════════════════════════
 
-.PHONY: vet
-vet: ## Run go vet
-	@printf "  $(C_ARROW) Vet\n"
-	@go vet ./...
-	@printf "  $(C_CHECK) Clean\n"
+##@ Code Quality
 
-.PHONY: lint
 lint: ## Run golangci-lint
-	@printf "  $(C_ARROW) Lint\n"
-	@golangci-lint run ./...
-	@printf "  $(C_CHECK) Clean\n"
+	$(INFO)
+	@printf "Running linters...\n"
+	@$(GOLINT) run ./...
+	$(SUCCESS)
+	@printf "$(GREEN)Linting passed$(RESET)\n"
 
-.PHONY: fmt
+vet: ## Run go vet
+	$(INFO)
+	@printf "Running go vet...\n"
+	@$(GOVET) ./...
+	$(SUCCESS)
+	@printf "$(GREEN)Vet passed$(RESET)\n"
+
 fmt: ## Format code
-	@printf "  $(C_ARROW) Formatting\n"
-	@gofmt -w .
-	@printf "  $(C_CHECK) Done\n"
+	$(INFO)
+	@printf "Formatting code...\n"
+	@$(GOFMT) -w .
+	$(SUCCESS)
+	@printf "$(GREEN)Code formatted$(RESET)\n"
 
-.PHONY: fmt-check
 fmt-check: ## Check formatting (no changes)
-	@printf "  $(C_ARROW) Checking format\n"
-	@test -z "$$(gofmt -l .)" || (gofmt -l . && printf "  $(C_RED)✗ Files need formatting$(C_RESET)\n" && exit 1)
-	@printf "  $(C_CHECK) Clean\n"
+	$(INFO)
+	@printf "Checking format...\n"
+	@test -z "$$($(GOFMT) -l .)" || ($(GOFMT) -l . && printf "  $(ERROR)Files need formatting$(RESET)\n" && exit 1)
+	$(SUCCESS)
+	@printf "$(GREEN)Format check passed$(RESET)\n"
 
-# ──────────────────────────────────────────────────────────────
-#  Dev
-# ──────────────────────────────────────────────────────────────
-
-.PHONY: tidy
 tidy: ## Tidy and verify dependencies
-	@printf "  $(C_ARROW) Tidying modules\n"
-	@go mod tidy
-	@go mod verify >/dev/null
-	@printf "  $(C_CHECK) Done\n"
+	$(INFO)
+	@printf "Tidying modules...\n"
+	@$(GOMOD) tidy
+	@$(GOMOD) verify >/dev/null
+	$(SUCCESS)
+	@printf "$(GREEN)Dependencies tidied$(RESET)\n"
 
-.PHONY: check
 check: fmt-check vet test ## Run all checks (format, vet, test)
 
-.PHONY: dev
-dev: tidy build ## Tidy, build — quick iteration loop
+# ═══════════════════════════════════════════════════════════════════════════════
+# HELP
+# ═══════════════════════════════════════════════════════════════════════════════
 
-# ──────────────────────────────────────────────────────────────
-#  Help
-# ──────────────────────────────────────────────────────────────
+##@ Help
 
-.PHONY: help
-help:
-	@printf "\n  $(C_BOLD)Tack CLI$(C_RESET) $(C_DIM)$(VERSION)$(C_RESET)\n\n"
-	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*## "}; {printf "  $(C_CYAN)%-14s$(C_RESET) %s\n", $$1, $$2}'
+help: ## Show this help message
 	@printf "\n"
-
-.DEFAULT_GOAL := help
+	@printf "$(BOLD)$(CYAN)╔════════════════════════════════════════════════════════════════╗$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)║$(RESET)                     $(BOLD)TACK$(RESET) - Makefile Help                       $(BOLD)$(CYAN)║$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)╚════════════════════════════════════════════════════════════════╝$(RESET)\n"
+	@printf "\n"
+	@printf "$(BOLD)Usage:$(RESET) make $(CYAN)<target>$(RESET)\n\n"
+	@awk 'BEGIN {FS = ":.*##"; section=""} \
+		/^##@/ { \
+			section=substr($$0, 5); \
+			printf "\n$(BOLD)$(YELLOW)%s$(RESET)\n", section \
+		} \
+		/^[a-zA-Z_-]+:.*?##/ { \
+			if (section != "") { \
+				printf "  $(CYAN)%-18s$(RESET) %s\n", $$1, $$2 \
+			} \
+		}' $(MAKEFILE_LIST)
+	@printf "\n"
+	@printf "$(BOLD)Examples:$(RESET)\n"
+	@printf "  make build         $(WHITE)# Build the binary$(RESET)\n"
+	@printf "  make test          $(WHITE)# Run all tests$(RESET)\n"
+	@printf "  make dev           $(WHITE)# Quick iteration loop$(RESET)\n"
+	@printf "\n"
